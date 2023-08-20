@@ -149,7 +149,7 @@ def register():
 
         # Redirect user to home page
         flash(f"Registered as <strong>{username}</strong>!")
-        return redirect("/")
+        return redirect("/listings")
     return render_template("register.html")
 
 
