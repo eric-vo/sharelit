@@ -1,0 +1,36 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Register - ShareLit
+{% endblock %}
+
+{% block body %}
+    <div class="container d-flex justify-content-center">
+        <div class="container further-down small-form text-center">
+            <h1 class="mb-3">Create Account</h1>
+            <form method="post">
+                <div class="mb-3">
+                    <input autofocus class="form-control" name="username" placeholder="Username">
+                </div>
+                <div class="mb-3">
+                    <input class="form-control" name="full-name" placeholder="Full Name">
+                </div>
+                <div class="mb-3">
+                    <input class="form-control" name="email" placeholder="Email" type="email">
+                </div>
+                <div class="mb-3">
+                    <input class="form-control" name="password" placeholder="Password" type="password">
+                </div>
+                <div class="mb-3">
+                    <input class="form-control" name="confirmation" placeholder="Confirm Password" type="password">
+                </div>
+                <div class="mb-3">
+                    Already have an account? <a href="/login">Log in here</a>.
+                </div>
+                <div class="mb-3">
+                    <input class="btn btn-warning" type="submit" value="Register">
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
