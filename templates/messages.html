@@ -1,0 +1,53 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Messages
+{% endblock %}
+
+{% block body %}
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-4">
+                <!-- Dropdown for selecting a conversation -->
+                <select id="conversations" class="form-control" onchange="selectConversation(this.value)">
+                    <!-- Conversations will be listed here -->
+                </select>
+            </div>
+            <div class="col-8 text-center">
+                <!-- Selected conversation's messages will be displayed here -->
+                <div id="messages"></div>
+                <input id="message_input" type="text" class="form-control mt-2" placeholder="Type your message...">
+                <button onclick="sendPythonMessage()" class="btn btn-primary mt-2">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedConversation = null;
+
+        function selectConversation(conversationId) {
+            selectedConversation = conversationId;
+            // Load the messages for the selected conversation
+            getMessages();
+        }
+
+        // ... rest of the script ...
+
+        function getConversations() {
+            fetch('/get_conversations')
+            .then(response => response.json())
+            .then(data => {
+                let dropdown = document.getElementById('conversations');
+                dropdown.innerHTML = ''; // Clear dropdown
+                data.forEach(conv => {
+                    dropdown.innerHTML += `<option value="${conv.id}">${conv.username}</option>`;
+                });
+            });
+        }
+
+        // Fetch the conversations when the page loads
+        getConversations(){
+
+        }
+    </script>
+{% endblock %}

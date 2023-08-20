@@ -44,13 +44,23 @@ def about():
 @login_required
 def create():
     if request.method == "POST":
+        title = request.form.get("title")
+        author = request.form.get("author")
+        description = request.form.get("description")
+
+        # Ensure all fields are filled
+        if not (title and author and description):
+            flash("All fields are required.")
+            return render_template(
+                "create.html", username=get_username(session)
+            )
         db.execute(
             "INSERT INTO listings (user_id, title, author,"
             "description) VALUES (?, ?, ?, ?)",
             session["user_id"],
-            request.form.get("title"),
-            request.form.get("author"),
-            request.form.get("description"),
+            title,
+            author,
+            description,
         )
         flash("Created listing!")
         return redirect("/listings")
@@ -62,9 +72,51 @@ def create():
 @login_required
 def listings():
     listings = get_books()
+    # Get names of users who created listings using JOIN
+    listing_users = db.execute(
+        "SELECT username FROM users JOIN listings ON "
+        "users.id = listings.user_id"
+    )
 
     return render_template(
-        "listings.html", listings=listings, username=get_username(session)
+        "listings.html",
+        listings_and_users=zip(listings, listing_users),
+        username=get_username(session),
+    )
+
+
+@app.route("/listings/<int:listing_id>", methods=["GET", "POST"])
+@login_required
+def listing(listing_id):
+    listing = db.execute("SELECT * FROM listings WHERE id = ?", listing_id)
+    listing_user = db.execute(
+        "SELECT username FROM users JOIN listings ON "
+        "users.id = listings.user_id WHERE listings.id = ?",
+        listing_id,
+    )
+
+    if request.method == "POST":
+        # Get form data
+        duration = request.form.get("duration")
+        time_period = request.form.get("time-period")
+
+        # Ensure all fields are filled
+        if not (duration and time_period):
+            flash("All fields are required.")
+            return render_template(
+                "listing.html",
+                listing=listing[0],
+                listing_user=listing_user[0],
+                username=get_username(session),
+            )
+
+
+
+    return render_template(
+        "listing.html",
+        listing=listing[0],
+        listing_user=listing_user[0],
+        username=get_username(session),
     )
 
 
@@ -80,6 +132,12 @@ def requests():
 @login_required
 def chat():
     return render_template("chat.html", username=get_username(session))
+
+
+@app.route("/messages")
+@login_required
+def messages():
+    return render_template("messages.html", username=get_username(session))
 
 
 @app.route("/login", methods=["GET", "POST"])

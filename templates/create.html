@@ -1,7 +1,7 @@
 {% extends 'layout.html' %}
 
 {% block title %}
-    Register - ShareLit
+    Create Listing - ShareLit
 {% endblock %}
 
 {% block body %}
@@ -10,16 +10,16 @@
             <h1 class="mb-3">Create Book Listing</h1>
             <form method="post">
                 <div class="mb-3">
-                    <input autofocus class="form-control" name="title" placeholder="Book Title">
+                    <input autofocus class="form-control" name="title" placeholder="Book Title" required>
                 </div>
                 <div class="mb-3">
-                    <input class="form-control" name="author" placeholder="Author">
+                    <input class="form-control" name="author" placeholder="Author" required>
                 </div>
                 <div class="mb-3">
-                    <textarea class="form-control" name="description" placeholder="Description or Notes" rows="7"></textarea>
+                    <textarea class="form-control" name="description" placeholder="Description or Notes" required rows="7"></textarea>
                 </div>
                 <div class="m-3">
-                    <input class="btn btn-warning" type="submit" value="List Book">
+                    <input class="btn btn-warning" required type="submit" value="List Book">
                 </div>
             </form>
         </div>

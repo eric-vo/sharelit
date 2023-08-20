@@ -15,31 +15,30 @@
                 Create New Listing
             </a>
         </div>
-    <!-- Create table for Listings-->
-    <div class="mt-4">
-        <table class= "table table-bordered">
-            <thred>
-                <tr>
-                    <th> Title </th>
-                    <th> Author </th>
-                    <th> Description </th>
-                    <th></th>
-                </tr>
-            </thred>
-            <tbody>
-                {% for listing in listings %}
+        <!-- Create table for Listings-->
+        <div class="mt-4">
+            <table class="table table-bordered">
+                <thead>
                     <tr>
-                        <td> {{ listing.title }} </td>
-                        <td> {{ listing.author }} </td>
-                        <td> {{ listing.description }} </td>
-                        <td>
-                            <a class="btn btn-warning" href="/request/{{ listing.id }}" role="button">
-                                Request
-                            </a>
-                        </td>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>User</th>
                     </tr>
-                {% endfor %}
-
-
+                </thead>
+                <tbody>
+                    {% for listing, user in listings_and_users %}
+                        <tr>
+                            <td>{{ listing.title }}</td>
+                            <td>{{ listing.author }}</td>
+                            <td>{{ user.username }}</td>
+                            <td>
+                                <a class="btn btn-warning" href="/listings/{{ listing.id }}" role="button">
+                                    Info
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+        </div>
     </div>
 {% endblock %}

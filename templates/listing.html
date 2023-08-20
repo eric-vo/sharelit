@@ -1,0 +1,36 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    {{ listing.title }} by {{ listing.author }} - ShareLit
+{% endblock %}
+
+{% block body %}
+    <div class="container d-flex justify-content-center">
+        <div class="container further-down small-form text-center">
+            <h1 class="mb-3">{{ listing.title }}</h1>
+            <strong>{{ listing.author }}</strong>
+            <p>
+                Supplied by: <a href="/profile/{{ listing_user.username }}">{{ listing_user.username }}</a>
+            </p>
+            <form class="m-5" method="post">
+                <div class="mb-3">
+                    How long would you like to borrow this book for?
+                </div>
+                <div class="d-flex justify-content-center mb-3 row">
+                    <input autofocus class="form-control" id="duration" min="1" name="duration" placeholder="#" required type="number">
+                    <select class="form-select" id="time-period" name="time-period">
+                        <option value="days">Days</option>
+                        <option value="weeks">Weeks</option>
+                        <option value="months">Months</option>
+                    </select>
+                </div>
+
+                <input class="btn btn-warning m-2" type="submit" value="Request Book">
+            </form>
+            <div class="mt-4">
+                <strong>Description</strong>
+            </div>
+            <p>{{ listing.description }}</p>
+        </div>
+    </div>
+{% endblock %}
