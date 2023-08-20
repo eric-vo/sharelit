@@ -1,0 +1,27 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Register - ShareLit
+{% endblock %}
+
+{% block body %}
+    <div class="container d-flex justify-content-center">
+        <div class="container further-down small-form text-center">
+            <h1 class="mb-3">Create Book Listing</h1>
+            <form method="post">
+                <div class="mb-3">
+                    <input autofocus class="form-control" name="title" placeholder="Book Title">
+                </div>
+                <div class="mb-3">
+                    <input class="form-control" name="author" placeholder="Author">
+                </div>
+                <div class="mb-3">
+                    <textarea class="form-control" name="description" placeholder="Description or Notes" rows="7"></textarea>
+                </div>
+                <div class="m-3">
+                    <input class="btn btn-warning" type="submit" value="List Book">
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

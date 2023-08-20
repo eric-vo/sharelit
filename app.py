@@ -1,7 +1,16 @@
+from datetime import datetime
 from string import ascii_lowercase, digits
 
 from cs50 import SQL
-from flask import Flask, flash, redirect, render_template, request, session
+from flask import (
+    Flask,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    session,
+)
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from flask_session import Session
@@ -18,6 +27,8 @@ Session(app)
 
 db = SQL("sqlite:///sharelit.db")
 
+messages = []
+
 
 @app.route("/")
 def index():
@@ -29,10 +40,46 @@ def about():
     return render_template("about.html", username=get_username(session))
 
 
+@app.route("/create", methods=["GET", "POST"])
+@login_required
+def create():
+    if request.method == "POST":
+        db.execute(
+            "INSERT INTO listings (user_id, title, author,"
+            "description) VALUES (?, ?, ?, ?)",
+            session["user_id"],
+            request.form.get("title"),
+            request.form.get("author"),
+            request.form.get("description"),
+        )
+        flash("Created listing!")
+        return redirect("/listings")
+
+    return render_template("create.html", username=get_username(session))
+
+
 @app.route("/listings")
 @login_required
 def listings():
-    return render_template("listings.html", username=get_username(session))
+    listings = get_books()
+
+    return render_template(
+        "listings.html", listings=listings, username=get_username(session)
+    )
+
+
+@app.route("/requests")
+@login_required
+def requests():
+    return render_template(
+        "requests.html", requests=requests, username=get_username(session)
+    )
+
+
+@app.route("/chat")
+@login_required
+def chat():
+    return render_template("chat.html", username=get_username(session))
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -79,6 +126,12 @@ def logout():
     # Redirect user to login form
     flash("Logged out!")
     return redirect("/")
+
+
+@app.route("/profile/<username>")
+def profile(username):
+    user = db.execute("SELECT * FROM users WHERE username = ?", username)
+    return render_template("profile.html", user=user[0], username=username)
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -153,6 +206,22 @@ def register():
     return render_template("register.html")
 
 
+@app.route("/send_message", methods=["POST"])
+def send_message():
+    username = get_username(session)
+    content = request.form["content"]
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    messages.append(
+        {"content": content, "timestamp": timestamp, "username": username}
+    )
+    return jsonify(success=True)
+
+
+@app.route("/get_messages")
+def get_messages():
+    return jsonify(messages)
+
+
 def get_username(session):
     """Get username from session"""
 
@@ -168,3 +237,15 @@ def get_username(session):
         return None
 
     return username[0]["username"]
+
+
+def get_books():
+    """Get books from database"""
+
+    books = db.execute("SELECT * FROM listings")
+
+    return books
+
+
+if __name__ == "__main__":
+    app.run(debug=True)

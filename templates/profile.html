@@ -1,13 +1,18 @@
 {% extends 'layout.html' %}
 
 {% block title %}
-    Profile - ShareLit
+    {{ user["username"] }} - ShareLit
 {% endblock %}
 
 {% block body %}
     <div class="container">
         <div class="further-down text-center">
-            <h1 class="mb-3">Profile</h1>
+            <h1 class="mb-3">{{ user["username"] }}</h1>
+            <strong>{{ user["full_name"] }}</strong>
+            <p>{{ user["email"] }}</p>
+            <a class="btn btn-warning m-2" href="mailto:{{ user['email'] }}" role="button">
+                Contact
+            </a>
         </div>
     </div>
 {% endblock %}
