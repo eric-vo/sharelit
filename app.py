@@ -2,15 +2,9 @@ from datetime import datetime
 from string import ascii_lowercase, digits
 
 from cs50 import SQL
-from flask import (
-    Flask,
-    flash,
-    jsonify,
-    redirect,
-    render_template,
-    request,
-    session,
-)
+from flask import (Flask, flash, jsonify, redirect, render_template, request,
+                   session)
+from flask_socketio import SocketIO, emit
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from flask_session import Session
@@ -19,6 +13,8 @@ from helpers import login_required
 VALID_USERNAME_CHARS = ascii_lowercase + digits + "_-."
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'secret!'
+socketio = SocketIO(app, async_mode='threading')
 
 # Configure session
 app.config["SESSION_PERMANENT"] = False
@@ -27,8 +23,7 @@ Session(app)
 
 db = SQL("sqlite:///sharelit.db")
 
-messages = []
-
+chat_messages = [] # List of messages
 
 @app.route("/")
 def index():
@@ -90,10 +85,11 @@ def listings():
 def listing(listing_id):
     listing = db.execute("SELECT * FROM listings WHERE id = ?", listing_id)
     listing_user = db.execute(
-        "SELECT username FROM users JOIN listings ON "
-        "users.id = listings.user_id WHERE listings.id = ?",
-        listing_id,
+    "SELECT users.username, users.id FROM users JOIN listings ON "
+    "users.id = listings.user_id WHERE listings.id = ?",
+    listing_id,
     )
+
 
     if request.method == "POST":
         # Get form data
@@ -110,7 +106,25 @@ def listing(listing_id):
                 username=get_username(session),
             )
 
+        # Insert into requests table (replace with actual table and columns)
+        db.execute(
+            "INSERT INTO requests (user_id, listing_id, duration, time_period) VALUES (?, ?, ?, ?)",
+            session["user_id"],
+            listing_id,
+            duration,
+            time_period,
+        )
 
+        # Message the user from current user about the request
+        message = "I would like to borrow your book for " + duration + " " + time_period + "."
+        db.execute(
+            "INSERT INTO messages (from_user_id, to_user_id, message) VALUES (?, ?, ?)",
+            session["user_id"],
+            listing_user[0]["id"],
+            message,
+        )
+        flash("Sent request!")
+        return redirect("/messages")
 
     return render_template(
         "listing.html",
@@ -137,7 +151,8 @@ def chat():
 @app.route("/messages")
 @login_required
 def messages():
-    return render_template("messages.html", username=get_username(session))
+    conversations = get_user_conversations(session)
+    return render_template("messages.html", conversations=conversations, username=get_username(session))
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -264,19 +279,27 @@ def register():
     return render_template("register.html")
 
 
-@app.route("/send_message", methods=["POST"])
-def send_message():
-    username = get_username(session)
-    content = request.form["content"]
+# Listen to the 'send_message' event from the client
+@socketio.on("send_message")
+def handle_send_message(data):
+    from_user_id = session["user_id"]
+    to_user_id = data["to_user_id"]
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    messages.append(
-        {"content": content, "timestamp": timestamp, "username": username}
-    )
-    return jsonify(success=True)
+    message = data["message"]
+
+    # Insert message into the database (update with the actual table and columns)
+    db.execute("INSERT INTO messages (from_user_id, to_user_id, message, timestamp) VALUES (?, ?, ?, ?)", from_user_id, to_user_id, message, timestamp)
+
+    # Create a message object for broadcasting
+    message = {"message": message, "timestamp": timestamp, "from_user_id": from_user_id, "to_user_id": to_user_id}
+
+    # Emit the message to all connected clients
+    socketio.emit("receive_message", message)
 
 
 @app.route("/get_messages")
 def get_messages():
+    messages = db.execute("SELECT * FROM messages WHERE from_user_id = ? OR to_user_id = ?", session["user_id"], session["user_id"])
     return jsonify(messages)
 
 
@@ -304,6 +327,54 @@ def get_books():
 
     return books
 
+def get_user_conversations(session):
+    messages = db.execute(
+        "SELECT * FROM messages WHERE from_user_id = ? OR to_user_id = ?", session["user_id"], session["user_id"]
+    )
 
+    conversations = {}
+    for message in messages:
+        other_user_id = message["from_user_id"] if message["from_user_id"] != session["user_id"] else message["to_user_id"]
+        other_user = db.execute("SELECT username FROM users WHERE id = ?", other_user_id)[0]
+
+        # Create a conversation entry if it doesn't exist
+        if other_user_id not in conversations:
+            conversations[other_user_id] = {
+                'id': other_user_id,
+                'name': other_user['username'],
+                'messages': []
+            }
+
+        # Append the message to the conversation's messages list
+        conversations[other_user_id]['messages'].append({
+            'text': message['message'],
+            'timestamp': message['timestamp'],
+            'from_user_id': message['from_user_id'],
+            'to_user_id': message['to_user_id']
+        })
+
+    # Convert the conversations dictionary to a list
+    conversations_list = list(conversations.values())
+
+    return conversations_list
+
+
+@socketio.on("request_conversation")
+def handle_request_conversation(data):
+    conversation_id = data["conversation_id"]
+    messages = db.execute(
+        "SELECT * FROM messages WHERE conversation_id = ?", conversation_id
+    )
+
+    for message in messages:
+        # Format and emit each message
+        formatted_message = {
+            "message": message["message"],
+            "timestamp": message["timestamp"],
+            "username": get_username(message["user_id"])
+        }
+        emit("receive_message", formatted_message)
+    
 if __name__ == "__main__":
-    app.run(debug=True)
+    socketio.run(app)
+    print("Running app.py")
