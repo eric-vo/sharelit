@@ -1,0 +1,45 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Book Listings - ShareLit
+{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <div class="mt-5 text-center">
+            <h1 class="mb-3">Book Listings</h1>
+            <p>
+                Find a textbook or your new favorite read.
+            </p>
+            <a class="btn btn-warning m-2" href="/create" role="button">
+                Create New Listing
+            </a>
+        </div>
+    <!-- Create table for Listings-->
+    <div class="mt-4">
+        <table class= "table table-bordered">
+            <thred>
+                <tr>
+                    <th> Title </th>
+                    <th> Author </th>
+                    <th> Description </th>
+                    <th></th>
+                </tr>
+            </thred>
+            <tbody>
+                {% for listing in listings %}
+                    <tr>
+                        <td> {{ listing.title }} </td>
+                        <td> {{ listing.author }} </td>
+                        <td> {{ listing.description }} </td>
+                        <td>
+                            <a class="btn btn-warning" href="/request/{{ listing.id }}" role="button">
+                                Request
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+
+
+    </div>
+{% endblock %}

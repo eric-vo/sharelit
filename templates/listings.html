@@ -11,9 +11,34 @@
             <p>
                 Find a textbook or your new favorite read.
             </p>
-            <button class="btn btn-warning m-2">
+            <a class="btn btn-warning m-2" href="/create" role="button">
                 Create New Listing
-            </button>
+            </a>
+        </div>
+        <!-- Create table for Listings-->
+        <div class="mt-4">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>User</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for listing, user in listings_and_users %}
+                        <tr>
+                            <td>{{ listing.title }}</td>
+                            <td>{{ listing.author }}</td>
+                            <td>{{ user.username }}</td>
+                            <td>
+                                <a class="btn btn-warning" href="/listings/{{ listing.id }}" role="button">
+                                    Info
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
         </div>
     </div>
 {% endblock %}
