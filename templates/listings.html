@@ -32,13 +32,22 @@
                             <td>{{ listing.author }}</td>
                             <td>{{ user.username }}</td>
                             <td>
-                                <a class="btn btn-warning" href="/listings/{{ listing.id }}" role="button">
-                                    Info
-                                </a>
+                                {% if session.user_id != user.id %}
+                                    <a class="btn btn-warning" href="/listings/{{ listing.id }}" role="button">
+                                        Info
+                                    </a>
+                                {% else %}
+                                    <form method="post">
+                                        <input type="hidden" name="listing-id" value="{{ listing.id }}">
+                                        <input type="hidden" name="creator-id" value="{{ user.id }}">
+                                        <input class="btn btn-warning" type="submit" value="Delete">
+                                    </form>
+                                {% endif %}
                             </td>
                         </tr>
                     {% endfor %}
                 </tbody>
+            </table>
         </div>
     </div>
 {% endblock %}
