@@ -9,45 +9,87 @@
         <div class="row">
             <div class="col-4">
                 <!-- Dropdown for selecting a conversation -->
-                <select id="conversations" class="form-control" onchange="selectConversation(this.value)">
+                <select id="conversationDropdown" class="form-control" onchange="selectConversation(this.value)">
                     <!-- Conversations will be listed here -->
+                    {% for conversation in conversations %}
+                        <option value="{{ conversation.id }}">{{ conversation.name }}</option>
+                    {% endfor %}
                 </select>
             </div>
             <div class="col-8 text-center">
                 <!-- Selected conversation's messages will be displayed here -->
-                <div id="messages"></div>
+                <div id="chat">
+                    <!-- Messages will be listed here -->
+                </div>
                 <input id="message_input" type="text" class="form-control mt-2" placeholder="Type your message...">
                 <button onclick="sendPythonMessage()" class="btn btn-primary mt-2">Send</button>
             </div>
         </div>
     </div>
 
-    <script>
-        let selectedConversation = null;
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script type="text/javascript">
+        var conversations = {{ conversations|tojson }};
+        var currentUserId = '{{ session["user_id"] }}';
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+        var currentConversationId;
+
+        // Handle incoming messages
+        socket.on('receive_message', function(data) {
+            var content = data.content;
+            var timestamp = data.timestamp;
+            var fromUserId = data.from_user_id;
+
+            // Create and append the new message only if it belongs to the current conversation
+            if (currentConversationId == data.conversation_id) {
+                var username = fromUserId == currentUserId ? "You" : conversations["from_user_id"] || 'Anonymous';
+                var newMessage = '<div class="message">' +
+                                '<span class="username">' + username + ': </span>' +
+                                '<span class="content">' + content + '</span>' +
+                                '<span class="timestamp">' + timestamp + '</span>' +
+                                '</div>';
+                document.getElementById('chat').innerHTML += newMessage;
+            }
+        });
 
         function selectConversation(conversationId) {
-            selectedConversation = conversationId;
-            // Load the messages for the selected conversation
-            getMessages();
+            currentConversationId = conversationId;
+            // Clear the messages when switching to a different conversation
+            document.getElementById('chat').innerHTML = '';
+
+            // Request messages for the selected conversation
+            socket.emit('request_conversation', { conversation_id: conversationId });
+            // For loop to display the messages
+            for (var i = 0; i < conversations[conversationId].length; i++) {
+                var content = conversations[conversationId][i].content;
+                var timestamp = conversations[conversationId][i].timestamp;
+                var fromUserId = conversations[conversationId][i].from_user_id;
+
+                var username = fromUserId == currentUserId ? "You" : conversations["from_user_id"] || 'Anonymous';
+                var newMessage = '<div class="message">' +
+                                '<span class="username">' + username + ': </span>' +
+                                '<span class="content">' + content + '</span>' +
+                                '<span class="timestamp">' + timestamp + '</span>' +
+                                '</div>';
+                document.getElementById('chat').innerHTML += newMessage;
+            }
         }
 
-        // ... rest of the script ...
+        function sendPythonMessage() {
+            var messageContent = document.getElementById("message_input").value;
 
-        function getConversations() {
-            fetch('/get_conversations')
-            .then(response => response.json())
-            .then(data => {
-                let dropdown = document.getElementById('conversations');
-                dropdown.innerHTML = ''; // Clear dropdown
-                data.forEach(conv => {
-                    dropdown.innerHTML += `<option value="${conv.id}">${conv.username}</option>`;
+            // Validate that a conversation is selected and the message is not empty
+            if (currentConversationId && messageContent.trim() !== '') {
+                // Send the message content and the current conversation ID to the server
+                socket.emit('send_message', {
+                    conversation_id: currentConversationId,
+                    content: messageContent
                 });
-            });
-        }
 
-        // Fetch the conversations when the page loads
-        getConversations(){
-
+                // Optionally, clear the message input
+                document.getElementById("message_input").value = '';
+            }
         }
     </script>
+
 {% endblock %}
