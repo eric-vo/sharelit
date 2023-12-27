@@ -1,8 +1,6 @@
 # ShareLit - Read. Share. Thrive. One book at a time.
 #### Description:
 ShareLit lets you share and borrow books from others around the world.
-#### Project Demo:
-https://ericvo.pythonanywhere.com/
 #### Demo Video:
 https://youtu.be/sD2jVEzqdk8
 #### How to Run:
